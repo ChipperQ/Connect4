@@ -134,7 +134,7 @@ class GameWindow < Gosu::Window
       @row = (index/7)
       return [(@column*77)+5, (@row*77)+5]
     end
-    
+     
   	def reset_if_replay()
   		@game = Game.new()
   	end     
