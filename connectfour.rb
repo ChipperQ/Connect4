@@ -1,9 +1,10 @@
 # Miguel Quime
 # Connect Four
 
-require 'gosu'
-
+# Runs the game.
 class Game
+
+# Big giant magic array, has every possible way you can win in Connect 4.
 	module Pattern
 		Won = 
 		[[(/RRRR....................................../),:R],	[(/BBBB....................................../),:B],	[(/R......R......R......R..................../),:R],	[(/B......B......B......B..................../),:B],	[(/R.......R.......R.......R................./),:R],	[(/..B.......B.......B.......B.............../),:B],	[(/......B.....B.....B.....B................./),:B],
@@ -38,6 +39,9 @@ class Game
 		@current_player = @players[:player1]
 	end
 
+# Places the piece at the correct spot on the board.
+# 'last_row' places the piece at the bottom of the board.
+# 'stack_row' Allows the pieces to stack on top each other, if the position below it is occupied. 
 	def make_move(pmove)
 		  @move = @pmove = pmove
 			last_row = 35
@@ -54,7 +58,8 @@ class Game
         false
 			end
 	end
-	
+
+# Checks to see if there is an 'R' or 'B', at that particular spot in the board array. 	
 	def occupied?
 		if @board[@move] == " "
 			return false
@@ -62,7 +67,8 @@ class Game
 			return true
 		end
 	end
-	
+
+# Determines if the position clicked is within 0 to 7, non-inclusive. 0..7 represents the column.	
 	def is_valid_move()
 		if @pmove >= 0 && @pmove < 7 && occupied? == false 
 			return true
@@ -71,6 +77,7 @@ class Game
 		end
 	end
 
+# Switches players after every move, unless the game ends.
 	def switch_player()
 		if @current_player == 'R' 
 			@current_player = @players[:player2]
@@ -79,6 +86,7 @@ class Game
 		end
 	end
 
+# Checks the module Pattern to see if there is a winning pattern.
 	def check_for_win()
 		@winner = nil
 		w = Pattern::Won.find {|p| p.first =~ @board.join}
@@ -89,12 +97,14 @@ class Game
 			false
 	end
   
+# If the module Pattern returns false, and all the spaces are filled, then the game ends wtih a tie.
 	def game_tie?()
 		if @board.include?(" ") == false
 			return true
 		end
 	end
 
+# The game ends if check_for_win returns true, or game_tie? returns true.
 	def end_game()
 		if check_for_win() then
 			return true
@@ -102,87 +112,3 @@ class Game
   end
   
 end
-
-class GameWindow < Gosu::Window
-  	def initialize
-  		super 541, 465, false
-  		self.caption = "Connect 4"
-  		@game = Game.new()
-  		@background_image = Gosu::Image.new(self, "c4board.png", true)
-      @black_piece = Gosu::Image.new(self, "b.png", true)
-      @green_piece = Gosu::Image.new(self, 'g.png', true)
-      @green_winning_piece = Gosu::Image.new(self, 'winner_green.png', true)
-      @black_winning_piece = Gosu::Image.new(self, 'winner_black.png', true)
-      @no_winner = Gosu::Image.new(self, 'no_winner.png', true)
-  	end
-
-  	def needs_cursor?
-  		true
-    end
-        
-   def index_from_mouse_location()
-      left_x_for_pixel = 1
-      right_x_for_pixel = 77
-      row = 7
-      @column_index = ((mouse_x.to_i-left_x_for_pixel)/right_x_for_pixel)
-      @row_index = (row*(((mouse_y.to_i)-left_x_for_pixel)/right_x_for_pixel))
-      @index = @column_index + @row_index
-    end
-    
-    def location_from_index(index)
-      @column = (index%7)
-      @row = (index/7)
-      return [(@column*77)+5, (@row*77)+5]
-    end
-     
-  	def reset_if_replay()
-  		@game = Game.new()
-  	end     
-
-    def button_down(id)
-    	close if id == Gosu::KbEscape
-      reset_if_replay() if id == Gosu::KbSpace
-      if id == Gosu::MsLeft
-        if @game.end_game() || @game.game_tie?()
-         nil
-        else
-          location_from_index(index_from_mouse_location())
-          if @game.make_move(@column)
-            @game.end_game()
-            @game.switch_player() unless @game.end_game()
-          end
-        end
-      else
-        puts "Only left clicks." unless id == Gosu::KbEscape || id == Gosu::KbSpace
-      end
-    end    
-
-    def draw()
-      @background_image.draw(0, 0, 0)
-      for index in 0..41
-        if @game.board[index] == "R"
-          (x,y) = location_from_index(index)
-          @green_piece.draw(x,y,0)
-        elsif @game.board[index] == "B"
-          (x,y) = location_from_index(index)
-          @black_piece.draw(x,y,0)
-        end
-      end
-      
-      if @game.game_tie?()
-        @no_winner.draw(170,45,0)
-      end
-      
-      if @game.end_game()
-        if @game.current_player == 'R'
-          @green_winning_piece.draw(170,45,0)
-        elsif @game.current_player == 'B'
-          @black_winning_piece.draw(170,45,0)
-        end 
-      end
-    end
-    
-  end
-  
-  window = GameWindow.new
-  window.show
